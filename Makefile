@@ -28,7 +28,7 @@ TOOLS_BIN_DIR := $(TOOLS_DIR)/$(BIN_DIR)
 .PHONY: all
 all: check build test
 
-NO_DOCKER ?= 1
+NO_DOCKER ?= 0
 
 ifeq ($(shell command -v podman > /dev/null 2>&1 ; echo $$? ), 0)
 	ENGINE=podman
@@ -66,6 +66,11 @@ check: verify-crds-sync lint fmt vet test ## Run code validations
 
 .PHONY: build
 build: machine-api-operator nodelink-controller machine-healthcheck machineset vsphere ## Build binaries
+
+
+.PHONY: node-healthcheck
+node-healthcheck:
+	$(DOCKER_CMD) ./hack/go-build.sh node-healthcheck
 
 .PHONY: machine-api-operator
 machine-api-operator:
