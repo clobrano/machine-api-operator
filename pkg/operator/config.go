@@ -33,6 +33,7 @@ type Controllers struct {
 	MachineHealthCheck string
 	KubeRBACProxy      string
 	TerminationHandler string
+	NodeHealthCheck    string
 }
 
 // Images allows build systems to inject images for MAO components
@@ -51,6 +52,7 @@ type Images struct {
 	ClusterAPIControllerPowerVS   string `json:"clusterAPIControllerPowerVS"`
 	ClusterAPIControllerNutanix   string `json:"clusterAPIControllerNutanix"`
 	KubeRBACProxy                 string `json:"kubeRBACProxy"`
+	NodeHealthcheck               string `json:"nodeHealthcheck"`
 }
 
 func getProviderFromInfrastructure(infra *configv1.Infrastructure) (configv1.PlatformType, error) {
@@ -140,4 +142,11 @@ func getKubeRBACProxyFromImages(images Images) (string, error) {
 		return "", fmt.Errorf("failed getting kubeRBACProxy image. It is empty")
 	}
 	return images.KubeRBACProxy, nil
+}
+
+func getNHCFromImages(images Images) (string, error) {
+	if images.NodeHealthcheck == "" {
+		return "", fmt.Errorf("failed getting NHC image. It is empty")
+	}
+	return images.NodeHealthcheck, nil
 }

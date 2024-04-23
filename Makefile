@@ -68,10 +68,6 @@ check: verify-crds-sync lint fmt vet test ## Run code validations
 build: machine-api-operator nodelink-controller machine-healthcheck machineset vsphere ## Build binaries
 
 
-.PHONY: node-healthcheck
-node-healthcheck:
-	$(DOCKER_CMD) ./hack/go-build.sh node-healthcheck
-
 .PHONY: machine-api-operator
 machine-api-operator:
 	$(DOCKER_CMD) ./hack/go-build.sh machine-api-operator

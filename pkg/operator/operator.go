@@ -450,6 +450,11 @@ func (optr *Operator) maoConfigFromInfrastructure() (*OperatorConfig, error) {
 		return nil, err
 	}
 
+	nhc, err := getNHCFromImages(*images)
+	if err != nil {
+		return nil, err
+	}
+
 	clusterWideProxy, err := optr.osClient.ConfigV1().Proxies().Get(context.Background(), "cluster", metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -476,6 +481,7 @@ func (optr *Operator) maoConfigFromInfrastructure() (*OperatorConfig, error) {
 			MachineHealthCheck: mhcImage,
 			KubeRBACProxy:      kubeRBACProxy,
 			TerminationHandler: terminationHandlerImage,
+			NodeHealthCheck:    nhc,
 		},
 		PlatformType: provider,
 	}, nil

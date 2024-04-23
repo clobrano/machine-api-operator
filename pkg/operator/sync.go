@@ -532,6 +532,26 @@ func newPodTemplateSpec(config *OperatorConfig, features map[string]bool) *corev
 	var readOnly int32 = 420
 	volumes := []corev1.Volume{
 		{
+			Name: "nhc-webhook-cert",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					// TODO: reusing the same secret for now, but this should be a separate secret
+					SecretName:  "machine-api-operator-webhook-cert",
+					DefaultMode: ptr.To[int32](readOnly),
+					Items: []corev1.KeyToPath{
+						{
+							Key:  "tls.crt",
+							Path: "tls.crt",
+						},
+						{
+							Key:  "tls.key",
+							Path: "tls.key",
+						},
+					},
+				},
+			},
+		},
+		{
 			Name: machineSetWebhookVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
@@ -771,6 +791,44 @@ func newContainers(config *OperatorConfig, features map[string]bool) []corev1.Co
 			Env:                      proxyEnvArgs,
 			Resources:                resources,
 			TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+		},
+		{
+			Name:    "node-healthcheck-controller",
+			Image:   config.Controllers.NodeHealthCheck,
+			Command: []string{"/manager"},
+			Args: []string{
+				"--health-probe-bind-address=:8099",
+				"--metrics-bind-address=127.0.0.1:8080",
+				"--leader-elect",
+			},
+			Env: append(proxyEnvArgs, corev1.EnvVar{
+				Name:  "DEPLOYMENT_NAMESPACE",
+				Value: "openshift-machine-api",
+			}),
+			Resources: resources,
+			ReadinessProbe: &corev1.Probe{
+				ProbeHandler: corev1.ProbeHandler{
+					HTTPGet: &corev1.HTTPGetAction{
+						Path: "/healthz",
+						Port: intstr.Parse("healthz"),
+					},
+				},
+			},
+			LivenessProbe: &corev1.Probe{
+				ProbeHandler: corev1.ProbeHandler{
+					HTTPGet: &corev1.HTTPGetAction{
+						Path: "/readyz",
+						Port: intstr.Parse("healthz"),
+					},
+				},
+			},
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					MountPath: "/tmp/k8s-webhook-server/serving-certs",
+					Name:      "nhc-webhook-cert",
+					ReadOnly:  true,
+				},
+			},
 		},
 	}
 	if config.Controllers.MachineHealthCheck != "" {
